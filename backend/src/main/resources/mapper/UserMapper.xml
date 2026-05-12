@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hytc.recommendation_data.sys.mapper.UserMapper">
+<resultMap id="userMapper" type="com.hytc.recommendation_data.sys.entity.User">
+    <id property="account" column="account" jdbcType="VARCHAR"/>
+    <result property="username" column="username" jdbcType="VARCHAR"/>
+    <result property="password" column="password" jdbcType="VARCHAR"/>
+    <result property="time" column="time" jdbcType="DATE"/>
+    <result property="head" column="head" jdbcType="VARCHAR"/>
+    <result property="certId" column="CERT_ID" jdbcType="VARCHAR"/>
+    <result property="status" column="status" jdbcType="INTEGER"/>
+</resultMap>
+</mapper>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hytc.recommendation_data.library.mapper.BookMapper">
+    <resultMap id="BookMapper" type="com.hytc.recommendation_data.library.entity.Book">
+        <id property="mCallNo" column="M_CALL_NO" jdbcType="VARCHAR"/>
+        <result property="mTitle" column="M_Title" jdbcType="VARCHAR"/>
+        <result property="mPublisher" column="M_PUBLISHER" jdbcType="VARCHAR"/>
+        <result property="mAuthor" column="M_AUTHOR" jdbcType="VARCHAR"/>
+        <result property="mPubYear" column="M_PUB_YEAR" jdbcType="VARCHAR"/>
+        <result property="status" column="Status" jdbcType="VARCHAR"/>
+        <result property="img" column="img" jdbcType="VARCHAR"/>
+    </resultMap>
+</mapper>

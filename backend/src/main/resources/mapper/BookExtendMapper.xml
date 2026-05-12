@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hytc.recommendation_data.library.mapper.BookExtendMapper">
+    <resultMap id="bookExtendMap"
+               type="com.hytc.recommendation_data.library.entity.extend.BookExtend"
+               extends="com.hytc.recommendation_data.library.mapper.BookMapper.BookMapper">
+        <association property="collect" javaType="com.hytc.recommendation_data.library.entity.Collect">
+            <id column="CALL_NO" property="callNo" jdbcType="VARCHAR"/>
+        </association>
+    </resultMap>
+
+    <select id="queryBook"
+            parameterType="com.hytc.recommendation_data.library.model.BookExtendDTO"
+            resultMap="bookExtendMap">
+        SELECT book.M_CALL_NO, M_TITLE, M_AUTHOR, M_PUBLISHER, M_PUB_YEAR, `Status`, img,a.CALL_NO
+        FROM book
+        LEFT JOIN (SELECT CALL_NO FROM collect WHERE CERT_ID = #{certId}) as a
+        ON book.M_CALL_NO = a.CALL_NO
+        <if test="mTitle!=null and mTitle!=''">
+            where M_TITLE LIKE "%${mTitle}%"
+        </if>
+        limit ${pageIndex},${pageSize}
+    </select>
+
+    <select id="queryBookByCallNo"
+            parameterType="hashmap"
+            resultMap="bookExtendMap">
+        SELECT book.M_CALL_NO,
+               M_TITLE,
+               M_AUTHOR,
+               M_PUBLISHER,
+               M_PUB_YEAR,
+               `Status`,
+               img,
+               a.CALL_NO
+        FROM book
+                 LEFT JOIN (SELECT CALL_NO FROM collect WHERE CERT_ID = #{certId}) as a
+                           ON book.M_CALL_NO = a.CALL_NO
+        WHERE M_CALL_NO = #{callNo}
+    </select>
+
+</mapper>

@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: recommendation_data
+  profiles:
+    active: dev
+  kafka:
+    # 指定kafka代理地址
+    bootstrap-servers: 192.168.10.12:9092
+    producer:
+      # 指定消息key和消息体的编解码方式
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer

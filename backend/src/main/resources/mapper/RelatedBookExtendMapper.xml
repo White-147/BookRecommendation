@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hytc.recommendation_data.library.mapper.RelatedBookExtendMapper">
+    <resultMap id="RelatedBookExtendMapper"
+               type="com.hytc.recommendation_data.library.entity.extend.RelatedBookExtend"
+               extends="com.hytc.recommendation_data.library.mapper.RelatedBookMapper.RelatedBookMapper">
+        <association property="collect" javaType="com.hytc.recommendation_data.library.entity.Collect">
+            <id column="CALL_NO" property="callNo" jdbcType="VARCHAR"/>
+        </association>
+        <association property="bookExtend" javaType="com.hytc.recommendation_data.library.entity.extend.BookExtend">
+            <id column="M_CALL_NO" property="mCallNo" jdbcType="VARCHAR"/>
+            <result property="mTitle" column="M_Title" jdbcType="VARCHAR"/>
+            <result property="mPublisher" column="M_PUBLISHER" jdbcType="VARCHAR"/>
+            <result property="mAuthor" column="M_AUTHOR" jdbcType="VARCHAR"/>
+            <result property="mPubYear" column="M_PUB_YEAR" jdbcType="VARCHAR"/>
+            <result property="img" column="img" jdbcType="VARCHAR"/>
+        </association>
+    </resultMap>
+
+    <select id="queryRelatedBook"
+            parameterType="hashmap"
+            resultMap="RelatedBookExtendMapper">
+        SELECT book.*,
+               a.CALL_NO
+        FROM book
+                 LEFT JOIN (SELECT CALL_NO FROM collect WHERE CERT_ID = #{certId}) AS a
+                           ON book.M_CALL_NO = a.CALL_NO
+        WHERE book.M_CALL_NO IN
+              (SELECT relatedbook.CALL_NO2
+               FROM relatedbook
+               WHERE relatedbook.CALL_NO1 = #{callNo});
+    </select>
+</mapper>

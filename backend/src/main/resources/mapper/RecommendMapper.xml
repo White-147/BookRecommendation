@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hytc.recommendation_data.library.mapper.RecommendMapper">
+    <resultMap id="recommendMap" type="com.hytc.recommendation_data.library.entity.extend.RecommendExtend">
+        <association property="bookExtend" javaType="com.hytc.recommendation_data.library.entity.extend.BookExtend">
+            <id column="M_CALL_NO" property="mCallNo" jdbcType="VARCHAR"/>
+            <result column="M_TITLE" property="mTitle" jdbcType="VARCHAR"/>
+            <result column="M_AUTHOR" property="mAuthor" jdbcType="VARCHAR"/>
+            <result column="M_PUBLISHER" property="mPublisher" jdbcType="VARCHAR"/>
+            <result column="M_PUB_YEAR" property="mPubYear" jdbcType="VARCHAR"/>
+            <result column="Status" property="status" jdbcType="VARCHAR"/>
+            <result column="CALL_NO" property="collect.callNo" jdbcType="VARCHAR"/>
+        </association>
+    </resultMap>
+
+    <select id="getRecommend"
+            parameterType="com.hytc.recommendation_data.library.model.RecommendDTO"
+            resultMap="recommendMap">
+        SELECT book.M_CALL_NO,
+               book.M_TITLE,
+               book.M_AUTHOR,
+               book.M_PUBLISHER,
+               book.M_PUB_YEAR,
+               book.Status,
+               a.CALL_NO
+        FROM book
+         LEFT JOIN
+         (SELECT CALL_NO FROM collect WHERE CERT_ID = #{certId})
+         AS a ON book.M_CALL_NO = a.CALL_NO
+        WHERE book.M_CALL_NO in (SELECT recommend.CALL_NO from recommend)
+          AND #{certId} in (select recommend.CERT_ID from recommend)
+        limit ${pageIndex},${pageSize}
+    </select>
+</mapper>

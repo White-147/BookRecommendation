@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hytc.recommendation_data.library.mapper.CollectMapper">
+    <resultMap id="collectMap"
+               type="com.hytc.recommendation_data.library.entity.extend.CollectExtend">
+
+        <association property="reader" javaType="com.hytc.recommendation_data.library.entity.Reader">
+            <id column="CERT_ID" property="certId" jdbcType="VARCHAR"/>
+            <result column="NAME" property="name" jdbcType="VARCHAR"/>
+        </association>
+
+        <association property="book" javaType="com.hytc.recommendation_data.library.entity.Book">
+            <id column="M_CALL_NO" property="mCallNo" jdbcType="VARCHAR"/>
+            <result column="M_TITLE" property="mTitle" jdbcType="VARCHAR"/>
+            <result column="M_AUTHOR" property="mAuthor" jdbcType="VARCHAR"/>
+            <result column="M_PUBLISHER" property="mPublisher" jdbcType="VARCHAR"/>
+            <result column="M_PUB_YEAR" property="mPubYear" jdbcType="VARCHAR"/>
+            <result column="Status" property="status" jdbcType="VARCHAR"/>
+        </association>
+    </resultMap>
+
+    <select id="queryCollectByCertId" parameterType="string" resultMap="collectMap">
+        SELECT reader.CERT_ID,
+               reader.`NAME`,
+               book.M_CALL_NO,
+               book.M_TITLE,
+               book.M_AUTHOR,
+               book.M_PUBLISHER,
+               book.M_PUB_YEAR,
+               book.Status
+        FROM book,
+             reader,
+             collect
+        WHERE reader.CERT_ID = #{certId}
+          AND book.M_CALL_NO = collect.CALL_NO
+          AND collect.CERT_ID = reader.CERT_ID
+    </select>
+
+    <select id="queryCollect" parameterType="hashmap" resultMap="collectMap">
+        SELECT reader.CERT_ID,
+               reader.`NAME`,
+               book.M_CALL_NO,
+               book.M_TITLE,
+               book.M_AUTHOR,
+               book.M_PUBLISHER,
+               book.M_PUB_YEAR,
+               book.Status
+        FROM book,
+             reader,
+             collect
+        WHERE collect.CERT_ID = #{certId}
+          AND collect.CALL_NO = #{callNo}
+          AND book.M_CALL_NO = collect.CALL_NO
+          AND collect.CERT_ID = reader.CERT_ID
+    </select>
+
+</mapper>
