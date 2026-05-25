@@ -1,4 +1,25 @@
-# BookRecommendation
+<p align="center">
+  <img src="./frontend/src/assets/image/common/logo.png" alt="BookRecommendation logo" width="96">
+</p>
+
+<h1 align="center">BookRecommendation</h1>
+
+<p align="center">高校图书馆业务场景下的图书推荐系统，覆盖学生用户、馆藏图书、借阅行为和 Spark / Hive 推荐计算链路。</p>
+
+<p align="center">
+  <a href="./README.md">简体中文</a> | <a href="./README.en.md">English</a>
+</p>
+
+<p align="center">
+  <img alt="Status" src="https://img.shields.io/badge/status-portfolio-7952B3?style=for-the-badge">
+  <img alt="Stack" src="https://img.shields.io/badge/stack-Vue%202%20%2B%20Spring%20Boot%20%2B%20Spark-2E7D32?style=for-the-badge">
+  <img alt="Screenshot" src="https://img.shields.io/badge/screenshot-frontend%20only-F59E0B?style=for-the-badge">
+  <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge"></a>
+</p>
+
+<p align="center">
+  <img src="./docs/assets/screenshots/frontend-overview.png" alt="BookRecommendation 前端登录界面截图" width="900">
+</p>
 
 图书推荐系统，本科毕业设计项目。项目以高校图书馆业务场景为背景，围绕学生用户、真实馆藏图书、借阅收藏行为和推荐计算，构建了一个前后端分离 + 大数据推荐链路的完整工程。
 
