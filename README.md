@@ -148,6 +148,16 @@ powershell -ExecutionPolicy Bypass -File scripts\stop-book.ps1
 
 仓库提供完整 Docker Compose 编排（Spark 3.5.2 + Hadoop 3.3.6 + Hive 4.0 + Kafka 3.7 + MySQL 8 + 前后端），适合服务器部署。详见 [Docker 全链路部署指南](./docs/docker-deploy.md)。
 
+### 免费在线演示（无需服务器）
+
+项目支持"预置推荐模式"（推荐结果由 `database/init.sql` 预置，Kafka 懒初始化、broker 不可达时后端照常启动），可以用**免费托管**把可交互演示部署到公网，作为作品集/简历的在线体验入口：
+
+- 后端：**Render Free**（Java Spring Boot，免费 750 小时/月）
+- 数据库：**TiDB Cloud Serverless**（MySQL 兼容，免费 5GB，代码零改动）
+- 前端：**GitHub Pages**（baseURL 指向后端地址，后端 CORS 已全开）
+
+大数据实时链路（Kafka/Spark/Hive）在免费层不运行，演示的是预置推荐模式（浏览/搜索/收藏/借阅/推荐展示全功能）。详细步骤见 [免费在线部署指南](./docs/deploy-free.md)。
+
 ## 部署说明
 
 ### 1. 前端
@@ -234,6 +244,9 @@ Spark 任务会基于用户-图书行为权重构建推荐计算链路，生成�
 - [项目背景与数据说明](./docs/project-background.md)
 - [总体架构](./docs/architecture.md)
 - [数据库说明](./docs/database.md)
+- [本地完整运行指南（Windows，含一键脚本）](./docs/running-local.md)
+- [免费在线部署指南（Render + TiDB + GitHub Pages）](./docs/deploy-free.md)
+- [Docker 全链路部署指南](./docs/docker-deploy.md)
 - [Linux 与大数据部署说明](./docs/deployment-linux.md)
 - [推荐算法与数据链路](./docs/recommendation-algorithm.md)
 - [爬虫子项目说明](./docs/crawler.md)
