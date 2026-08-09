@@ -101,6 +101,8 @@ export default {
       this.$http.get("/library/collect/queryByCertId?certId=" + this.loginForm.certId).then((res) => {
         this.collectionList = res.data.data
         this.collectListLoading = false
+      }).catch(() => {
+        this.collectListLoading = false
       })
     },
     updateState(row) {

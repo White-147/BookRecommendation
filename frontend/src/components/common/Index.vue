@@ -182,7 +182,7 @@ export default {
       }
     },
     getPath() {
-      return this.loginForm.head ? require('@/assets/image/head/' + this.loginForm.head) : ''
+      return this.loginForm.head ? require('@/assets/image/head/' + this.loginForm.head) : require('@/assets/image/head/profile.jpeg')
     }
   },
   computed: {

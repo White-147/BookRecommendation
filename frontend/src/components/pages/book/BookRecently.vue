@@ -161,6 +161,8 @@ export default {
         this.newBookTable = res.data.data.list
         this.totalCount = res.data.data.totalCount
         this.newBookTableLoading = false
+      }).catch(() => {
+        this.newBookTableLoading = false
       })
     },
     changeStateFormat(row) {

@@ -24,7 +24,7 @@
                book.M_PUBLISHER,
                book.M_PUB_YEAR,
                book.`Status`,
-               book.img,
+               CASE WHEN book.img IS NULL OR book.img = '' THEN 'not found' ELSE book.img END AS img,
                a.CALL_NO
         FROM book
                  LEFT JOIN

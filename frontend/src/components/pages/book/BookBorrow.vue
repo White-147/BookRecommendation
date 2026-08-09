@@ -154,6 +154,8 @@ export default {
         this.dataTable = res.data.data.list
         this.totalCount = res.data.data.totalCount
         this.dataTableLoading = false
+      }).catch(() => {
+        this.dataTableLoading = false
       })
     },
     changeStateFormat(row) {

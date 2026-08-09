@@ -12,7 +12,9 @@
     <select id="queryBook"
             parameterType="com.hytc.recommendation_data.library.model.BookExtendDTO"
             resultMap="bookExtendMap">
-        SELECT book.M_CALL_NO, M_TITLE, M_AUTHOR, M_PUBLISHER, M_PUB_YEAR, `Status`, img,a.CALL_NO
+        SELECT book.M_CALL_NO, M_TITLE, M_AUTHOR, M_PUBLISHER, M_PUB_YEAR, `Status`,
+               CASE WHEN img IS NULL OR img = '' THEN 'not found' ELSE img END AS img,
+               a.CALL_NO
         FROM book
         LEFT JOIN (SELECT CALL_NO FROM collect WHERE CERT_ID = #{certId}) as a
         ON book.M_CALL_NO = a.CALL_NO
@@ -31,7 +33,7 @@
                M_PUBLISHER,
                M_PUB_YEAR,
                `Status`,
-               img,
+               CASE WHEN img IS NULL OR img = '' THEN 'not found' ELSE img END AS img,
                a.CALL_NO
         FROM book
                  LEFT JOIN (SELECT CALL_NO FROM collect WHERE CERT_ID = #{certId}) as a

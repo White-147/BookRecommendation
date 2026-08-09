@@ -57,7 +57,7 @@ object Step8 {
     // 空批次（Kafka 无新消息）不覆盖 recommend 表，避免清空推荐结果
     if (!recommendDF.isEmpty) {
       recommendDF.write.format("jdbc")
-        .option("url", "jdbc:mysql://hadoopPD:3306/library")
+        .option("url", "jdbc:mysql://localhost:3306/library")
         .option("driver", "com.mysql.cj.jdbc.Driver")
         .option("user", "root")
         .option("password", "root")

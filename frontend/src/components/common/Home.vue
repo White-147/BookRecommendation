@@ -98,7 +98,7 @@ export default {
         return [year, month + 1, day - eachMonth[month - 1]]
     },
     getPath() {
-      return this.loginForm.head ? require('@/assets/image/head/' + this.loginForm.head) : ''
+      return this.loginForm.head ? require('@/assets/image/head/' + this.loginForm.head) : require('@/assets/image/head/profile.jpeg')
     },
     getLendList() {
       if (this.lendListLoading)
@@ -178,16 +178,19 @@ export default {
           series: [{data: numEachDay, type: 'line'}]
         }
         myECharts.setOption(option);
+      }).catch(() => {
+        // 图表数据加载失败时保持空白，不阻塞页面
       })
     }
   },
   created() {
-    setTimeout(() => {
-      this.getEChart();
-    }, 1000)
   },
   mounted() {
     this.getLendList()
+    // 图表依赖 loginForm 与 DOM：mounted + nextTick 保证两者就绪
+    this.$nextTick(() => {
+      this.getEChart()
+    })
   }
 }
 </script>

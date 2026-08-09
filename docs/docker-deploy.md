@@ -46,27 +46,28 @@ docker compose up -d backend frontend
 docker exec -it book-bigdata bash
 
 # 启动 Spark Streaming 实时推荐（消费 Kafka userLog → Hive → 计算 → 回写 MySQL）
+# jar 产物：bigdata/target/recommend_bigdata-1.0.jar（compose 挂载到 /opt/bigdata-jars）
 spark-submit \
   --class com.hytc.bigdata.SparkStreamingRunner \
   --master local[*] \
-  --jars /opt/bigdata-jars/spark-streaming-kafka-0-10_2.13-3.3.2.jar \
-  /opt/bigdata-jars/bigdata-1.0-SNAPSHOT.jar
+  --packages org.apache.spark:spark-streaming-kafka-0-10_2.13:3.5.2,com.mysql:mysql-connector-j:8.0.33 \
+  /opt/bigdata-jars/recommend_bigdata-1.0.jar
 ```
 
-> Kafka 依赖 jar（`spark-streaming-kafka-0-10_2.13-3.3.2.jar`）在 `bigdata/target/` 下（maven 依赖拷贝），或从 Maven 仓库获取。
+> Kafka/MySQL 依赖 jar 通过 `--packages` 拉取（镜像内可访问 Maven 中央仓库）；若离线，可将本机 `spark/jars/` 下的 `spark-streaming-kafka-0-10_2.13-3.5.2.jar`、`spark-token-provider-kafka-0-10_2.13-3.5.2.jar`、`kafka-clients-3.4.1.jar`、`mysql-connector-j-8.0.33.jar` 一并挂载/拷入容器后去掉 `--packages`。
 
-## 三、部署前需修改的地址（代码内配置）
+> 本机 Windows 环境已用 **Spark 3.5.2（Scala 2.13）+ 真实 Hive 4.0 metastore（元数据存 MySQL）+ Kafka 3.7** 完整验证同一 jar 与链路（见 `running-local.md`），Docker 镜像（Spark 3.5.2 + Hive 4.0）与本机版本一致，运行配置可直接复用。
 
-原代码中的开发地址（Ubuntu 时代）需改为 compose 服务名：
+## 三、地址配置说明（代码现状）
 
-| 位置 | 原值 | 改为 |
+仓库代码中的开发地址已统一改为本机默认值，Docker 部署时由 compose 环境变量覆盖，无需改代码：
+
+| 位置 | 当前值 | compose 覆盖 |
 | --- | --- | --- |
-| `backend/src/main/resources/application.yml` → `spring.kafka.bootstrap-servers` | `192.168.10.12:9092` | `kafka:9092` |
-| `backend/src/main/resources/application-dev.yml` → datasource url | `jdbc:mysql://hadoopPD:3306/library` | `jdbc:mysql://mysql:3306/library` |
-| `bigdata/.../KafkaUtil.scala` → bootstrap.servers | `192.168.10.12:9092` | `kafka:9092` |
-| `bigdata/.../Step8.scala` 等 → JDBC url | `jdbc:mysql://hadoopPD:3306/library` | `jdbc:mysql://mysql:3306/library` |
-
-> 本地单机开发保持原值不受影响；部署时用环境变量（compose 已注入 SPRING_*）或一次性修改。
+| `backend/src/main/resources/application.yml` → `spring.kafka.bootstrap-servers` | `localhost:9092`（可通过 `SPRING_KAFKA_BOOTSTRAP_SERVERS` 覆盖） | `kafka:9092`（compose 已注入） |
+| `backend/src/main/resources/application-dev.yml` → datasource url | `jdbc:mysql://localhost:3306/library` | `jdbc:mysql://mysql:3306/library`（compose 已注入） |
+| `bigdata/.../KafkaUtil.scala` → bootstrap.servers（config.properties） | `localhost:9092` | 容器内改为 `kafka:9092`（或直接使用 compose 网络别名） |
+| `bigdata/.../Step8.scala`、`RelatedBookRecommend.scala`、`NewBookRecommend.scala` → JDBC url | `jdbc:mysql://localhost:3306/library` | 容器内改为 `jdbc:mysql://mysql:3306/library` |
 
 ## 四、验证
 

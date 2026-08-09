@@ -20,7 +20,13 @@
     <select id="queryRelatedBook"
             parameterType="hashmap"
             resultMap="RelatedBookExtendMapper">
-        SELECT book.*,
+        SELECT book.M_CALL_NO,
+               book.M_TITLE,
+               book.M_AUTHOR,
+               book.M_PUBLISHER,
+               book.M_PUB_YEAR,
+               book.`Status`,
+               CASE WHEN book.img IS NULL OR book.img = '' THEN 'not found' ELSE book.img END AS img,
                a.CALL_NO
         FROM book
                  LEFT JOIN (SELECT CALL_NO FROM collect WHERE CERT_ID = #{certId}) AS a

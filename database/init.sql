@@ -103,18 +103,18 @@ INSERT INTO `reader` (`CERT_ID`, `NAME`, `DEPT`, `REDR_REG_D`, `REDR_TYPE`) VALU
 ('2020003', '王芳', '数据科学与大数据技术', '2020-09-01', '本科生');
 
 INSERT INTO `book` (`M_CALL_NO`, `M_TITLE`, `M_AUTHOR`, `M_PUBLISHER`, `M_PUB_YEAR`, `Status`, `img`) VALUES
-('TP312.8JA-1', 'Java 核心技术 卷I', '凯·S. 霍斯特曼', '机械工业出版社', '2020', '在馆', NULL),
-('TP312.8JA-2', 'Java 编程思想', 'Bruce Eckel', '机械工业出版社', '2007', '在馆', NULL),
-('TP311.13-1', '深入理解计算机系统', 'Randal E. Bryant', '机械工业出版社', '2016', '在馆', NULL),
-('TP311.56-1', 'Spring 实战', 'Craig Walls', '人民邮电出版社', '2022', '在馆', NULL),
-('TP311.56-2', 'Spring Boot 编程思想', '小马哥', '电子工业出版社', '2020', '在馆', NULL),
-('TP316.81-1', '鸟哥的 Linux 私房菜', '鸟哥', '人民邮电出版社', '2018', '在馆', NULL),
-('TP274-1', 'Spark 快速大数据分析', 'Holden Karau', '人民邮电出版社', '2019', '在馆', NULL),
-('TP274-2', 'Hadoop 权威指南', 'Tom White', '清华大学出版社', '2017', '在馆', NULL),
-('TP274-3', '数据挖掘导论', 'Pang-Ning Tan', '人民邮电出版社', '2019', '在馆', NULL),
-('TP393.09-1', 'Head First 设计模式', 'Eric Freeman', '中国电力出版社', '2007', '在馆', NULL),
-('TP311.52-1', '代码整洁之道', 'Robert C. Martin', '人民邮电出版社', '2020', '在馆', NULL),
-('TP311.52-2', '重构：改善既有代码的设计', 'Martin Fowler', '人民邮电出版社', '2019', '在馆', NULL);
+('TP312.8JA-1', 'Java 核心技术 卷I', '凯·S. 霍斯特曼', '机械工业出版社', '2020', 'False', NULL),
+('TP312.8JA-2', 'Java 编程思想', 'Bruce Eckel', '机械工业出版社', '2007', 'True', NULL),
+('TP311.13-1', '深入理解计算机系统', 'Randal E. Bryant', '机械工业出版社', '2016', 'True', NULL),
+('TP311.56-1', 'Spring 实战', 'Craig Walls', '人民邮电出版社', '2022', 'False', NULL),
+('TP311.56-2', 'Spring Boot 编程思想', '小马哥', '电子工业出版社', '2020', 'False', NULL),
+('TP316.81-1', '鸟哥的 Linux 私房菜', '鸟哥', '人民邮电出版社', '2018', 'False', NULL),
+('TP274-1', 'Spark 快速大数据分析', 'Holden Karau', '人民邮电出版社', '2019', 'False', NULL),
+('TP274-2', 'Hadoop 权威指南', 'Tom White', '清华大学出版社', '2017', 'False', NULL),
+('TP274-3', '数据挖掘导论', 'Pang-Ning Tan', '人民邮电出版社', '2019', 'True', NULL),
+('TP393.09-1', 'Head First 设计模式', 'Eric Freeman', '中国电力出版社', '2007', 'False', NULL),
+('TP311.52-1', '代码整洁之道', 'Robert C. Martin', '人民邮电出版社', '2020', 'False', NULL),
+('TP311.52-2', '重构：改善既有代码的设计', 'Martin Fowler', '人民邮电出版社', '2019', 'True', NULL);
 
 INSERT INTO `collect` (`cert_id`, `call_no`) VALUES
 ('2020001', 'TP312.8JA-1'),

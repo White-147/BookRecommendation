@@ -29,35 +29,36 @@ object SparkStreamingRunner {
 
     logDStream.foreachRDD(foreachFunc = (rdd: RDD[String]) => {
       // 空批次（Kafka 无新消息）跳过计算链路，避免空数据覆盖推荐结果
-      if (rdd.isEmpty()) return
+      // 注意：Scala 2.13 + Spark 3.x 不允许在闭包内使用 return（ReturnStatementInClosureException）
+      if (!rdd.isEmpty()) {
+        val spark: SparkSession = SparkSession
+          .builder()
+          .config(sparkConf)
+          .enableHiveSupport()
+          .getOrCreate()
 
-      val spark: SparkSession = SparkSession
-        .builder()
-        .config(sparkConf)
-        .enableHiveSupport()
-        .getOrCreate()
+        import spark.implicits._
 
-      import spark.implicits._
+        val logRDD: RDD[(String, String, String, String)] = rdd.map((x: String) => {
+          val strings: Array[String] = x.split(",")
+          (strings(0), strings(1), strings(2), "userlog")
+        })
 
-      val logRDD: RDD[(String, String, String, String)] = rdd.map((x: String) => {
-        val strings: Array[String] = x.split(",")
-        (strings(0), strings(1), strings(2), "userlog")
-      })
+        logRDD.toDF("cert_id", "call_no", "action", "part")
+          .write.partitionBy("part")
+          .mode(SaveMode.Append).format("hive")
+          .saveAsTable("userlog")
 
-      logRDD.toDF("cert_id", "call_no", "action", "part")
-        .write.partitionBy("part")
-        .mode(SaveMode.Append).format("hive")
-        .saveAsTable("userlog")
-
-      Step1.step1Spark(sparkConf, "calculatePreference")
-      Step2.step2Spark(sparkConf, "preferenceMatrix")
-      Step3.step3Spark(sparkConf, "concurrenceRelation")
-      Step4.step4Spark(sparkConf, "concurrenceTimes")
-      Step5.step5Spark(sparkConf, "pearsonCoefficient")
-      Step6.step6Spark(sparkConf, "concurrenceMatrix")
-      Step7.step7Spark(sparkConf, "recommendMatrix")
-      Step8.step8Spark(sparkConf, "rejectLent")
-      RelatedBookRecommend.relatedBookRecommend(sparkConf, "relatedBookRecommend")
+        Step1.step1Spark(sparkConf, "calculatePreference")
+        Step2.step2Spark(sparkConf, "preferenceMatrix")
+        Step3.step3Spark(sparkConf, "concurrenceRelation")
+        Step4.step4Spark(sparkConf, "concurrenceTimes")
+        Step5.step5Spark(sparkConf, "pearsonCoefficient")
+        Step6.step6Spark(sparkConf, "concurrenceMatrix")
+        Step7.step7Spark(sparkConf, "recommendMatrix")
+        Step8.step8Spark(sparkConf, "rejectLent")
+        RelatedBookRecommend.relatedBookRecommend(sparkConf, "relatedBookRecommend")
+      }
     })
 
     ssc.start()

@@ -23,7 +23,7 @@ object NewBookRecommend {
     import spark.implicits._
 
     val bookRDD: RDD[(String, String)] = spark.read.format("jdbc")
-      .option("url", "jdbc:mysql://hadoopPD:3306/library")
+      .option("url", "jdbc:mysql://localhost:3306/library")
       .option("driver", "com.mysql.cj.jdbc.Driver")
       .option("user", "root")
       .option("password", "root")
@@ -64,7 +64,7 @@ object NewBookRecommend {
     resultRDD.map((_: (String, String))._1)
       .toDF("CALL_NO")
       .write.format("jdbc")
-      .option("url", "jdbc:mysql://hadoopPD:3306/library")
+      .option("url", "jdbc:mysql://localhost:3306/library")
       .option("driver", "com.mysql.cj.jdbc.Driver")
       .option("user", "root")
       .option("password", "root")

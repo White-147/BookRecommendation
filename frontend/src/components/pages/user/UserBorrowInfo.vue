@@ -122,6 +122,8 @@ export default {
         this.lendList = res.data.data.list
         this.totalPage = res.data.data.totalCount
         this.lendListLoading = false
+      }).catch(() => {
+        this.lendListLoading = false
       })
     },
     toBookInfo(item) {

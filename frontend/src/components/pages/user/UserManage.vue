@@ -83,7 +83,7 @@ export default {
   },
   methods: {
     getPath() {
-      return this.loginForm.head ? require('@/assets/image/head/' + this.loginForm.head) : ''
+      return this.loginForm.head ? require('@/assets/image/head/' + this.loginForm.head) : require('@/assets/image/head/profile.jpeg')
     },
     getUser() {
       if(this.userLoading)
@@ -102,7 +102,11 @@ export default {
             this.dialogFormVisible = false
             this.userLoading = false
             this.editUserForm.username = ""
+          }).catch(() => {
+            this.userLoading = false
           })
+        }).catch(() => {
+          this.userLoading = false
         })
       } else {
         if (this.$refs.upload._data.uploadFiles.length > 0)
@@ -112,6 +116,8 @@ export default {
           this.loginForm = res.data.data
           sessionStorage.setItem("loginForm", JSON.stringify(this.loginForm))
           this.dialogFormVisible = false
+          this.userLoading = false
+        }).catch(() => {
           this.userLoading = false
         })
       }

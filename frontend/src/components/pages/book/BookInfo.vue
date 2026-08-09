@@ -13,6 +13,8 @@
               </div>
             </el-image>
             <el-image v-if="book.img==='not found'"
+                      :src="bookCoverPlaceholder"
+                      fit="cover"
                       style="cursor:default;height:200px;width:200px;">
             </el-image>
           </div>
@@ -77,6 +79,8 @@
               </div>
             </el-image>
             <el-image v-if="scope.row.bookExtend.img==='not found'"
+                      :src="bookCoverPlaceholder"
+                      fit="cover"
                       style="cursor:default;height:180px;width:180px;">
             </el-image>
           </template>
@@ -97,11 +101,13 @@
 </template>
 <script>
 import {mapState} from 'vuex'
+import bookCoverPlaceholder from '@/assets/image/book_cover_placeholder.jpg'
 
 export default {
   name: "BookInfo",
   data() {
     return {
+      bookCoverPlaceholder,
       currentMenu: {
         path: "/Book/BookInfo",
         label: "图书详情",
@@ -141,16 +147,30 @@ export default {
         this.callNo = sessionStorage.getItem('callNo')
         this.certId = sessionStorage.getItem('certId')
       }
+      // 参数缺失保护：直接从 URL/书签进入（如 #/Book/BookInfo 无参数）时不调接口，
+      // 避免请求 400 后 collectLoading 卡死导致全屏转圈
+      if (!this.callNo) {
+        this.$message.warning('缺少图书参数，请从列表重新进入')
+        this.collectLoading = false
+        this.goBack()
+        return
+      }
       this.$http.get("/library/book/selectBookExtendByCallNo?callNo="
-          + this.callNo + "&&certId=" + this.certId).then((res) => {
+          + this.callNo + "&certId=" + this.certId).then((res) => {
         this.book = res.data.data
         this.getRelatedBook()
+      }).catch(() => {
+        this.$message.error('图书信息加载失败')
+        this.collectLoading = false
       })
     },
     getRelatedBook() {
       this.$http.get("/library/relatedBook/getRelatedBook?certId=" +
           this.certId + "&callNo=" + this.callNo).then((res) => {
         this.relatedBooks = res.data.data
+        this.collectLoading = false
+      }).catch(() => {
+        this.relatedBooks = []
         this.collectLoading = false
       })
     },

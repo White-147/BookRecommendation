@@ -32,7 +32,7 @@ object RelatedBookRecommend {
     step5RDD.distinct().
       toDF("CALL_NO1", "CALL_NO2")
       .write.format("jdbc")
-      .option("url", "jdbc:mysql://hadoopPD:3306/library")
+      .option("url", "jdbc:mysql://localhost:3306/library")
       .option("driver", "com.mysql.cj.jdbc.Driver")
       .option("user", "root")
       .option("password", "root")

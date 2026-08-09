@@ -64,7 +64,7 @@ flowchart LR
     Crawler["crawler\nSelenium"] --> MySQL
 ```
 
-完整系统不是单纯的 Windows 本地 Web 项目。前端、后端和爬虫可以在本地开发调试，但推荐计算链路需要 Linux/Ubuntu 环境中的 Hadoop、Hive、Spark 和 Kafka 支撑。
+完整系统包含前端、后端和大数据推荐链路。**已在本机 Windows 单机完整验证**：Kafka（KRaft）+ Spark 3.5.2 + 真实 Hive 4.0（metastore 元数据存 MySQL）+ MySQL 全部原生运行，Spark Streaming 消费用户行为、Hive 沉淀中间表、推荐结果回写 MySQL 全链路可用（一键脚本见下文）。
 
 ## 目录结构
 
@@ -81,7 +81,7 @@ BookRecommendation/
 └── README.md
 ```
 
-`database/` 与 `scripts/` 当前仅作为本地预留目录，因 Git 不提交空目录，首次上传时不会出现在 GitHub 仓库中；后续补充脱敏 SQL 或辅助脚本时再创建对应目录内容。
+`database/init.sql` 提供完整建库建表与演示数据；`scripts/` 提供一键启停脚本（见上文"一键启动/停止"）。
 
 ## 核心数据链路
 
@@ -131,7 +131,22 @@ cd backend && mvnw.cmd spring-boot:run     # 后端 (8081)
 cd frontend && npm install && npm run serve # 前端
 ```
 
-演示账号 `2020001` / `2020002` / `2020003`，密码 `123456`。大数据实时链路（Kafka/Spark/Hive）可选方案见 [本地完整运行指南](./docs/running-local.md) 与 [Docker 全链路部署指南](./docs/docker-deploy.md)（Spark 3.5.2 + Kafka 3.7 + Hive 4.0，3.3.2 jar 先试方案）。
+演示账号 `2020001` / `2020002` / `2020003`，密码 `123456`。
+
+### 一键启动 / 停止（含大数据全链路）
+
+仓库提供 PowerShell 一键脚本，按顺序启动 **MySQL → Kafka → Hive metastore → 后端 → Spark Streaming → 前端**（幂等，已运行的服务自动跳过）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start-book.ps1
+powershell -ExecutionPolicy Bypass -File scripts\stop-book.ps1
+```
+
+日志输出到仓库 `logs/` 目录。大数据全链路（Kafka 行为日志 → Spark Streaming → 真实 Hive 4.0 元数据（MySQL 存储）→ 推荐结果回写 MySQL）在本机已完整验证（推荐 12 条结果正常产出）。环境与软件要求见 [本地完整运行指南](./docs/running-local.md)。
+
+### Docker 部署（可选）
+
+仓库提供完整 Docker Compose 编排（Spark 3.5.2 + Hadoop 3.3.6 + Hive 4.0 + Kafka 3.7 + MySQL 8 + 前后端），适合服务器部署。详见 [Docker 全链路部署指南](./docs/docker-deploy.md)。
 
 ## 部署说明
 
@@ -173,17 +188,9 @@ backend/src/main/resources/application.yml
 
 ### 3. 大数据推荐模块
 
-`bigdata` 模块需要在 Linux/Ubuntu 大数据环境中运行，依赖：
+`bigdata` 模块负责消费 Kafka 用户行为、写入 Hive、执行推荐计算，并将结果回写到 MySQL。依赖 Hadoop（winutils 兼容层）/ Hive（metastore）/ Spark / Kafka / MySQL。
 
-- Hadoop / HDFS
-- Hive
-- Spark
-- Kafka
-- MySQL
-
-该模块负责消费 Kafka 用户行为、写入 Hive、执行推荐计算，并将结果回写到 MySQL。
-
-详细说明见 [Linux 与大数据部署说明](./docs/deployment-linux.md)。
+本机 Windows 原生运行方式见 [本地完整运行指南](./docs/running-local.md)；Linux/Ubuntu 集群部署见 [Linux 与大数据部署说明](./docs/deployment-linux.md)；Docker 一键编排见 [Docker 全链路部署指南](./docs/docker-deploy.md)。
 
 ### 4. 爬虫模块
 
@@ -233,8 +240,8 @@ Spark 任务会基于用户-图书行为权重构建推荐计算链路，生成�
 
 ## 后续可改进方向
 
-- 补充脱敏后的 MySQL 建表 SQL 和少量演示数据。
 - 增加 `.env.example`，减少环境地址写死带来的迁移成本。
 - 补充前端页面截图和推荐链路运行截图。
-- 将后端、前端和大数据模块的启动方式整理为更清晰的部署脚本。
 - 为核心业务接口和推荐计算增加更完整的测试说明。
+- 将图书封面资源补齐为正式封面图（当前使用占位图）。
+- 在支持 Docker 的服务器上实跑 Docker 全链路部署（compose 编排已就绪）。

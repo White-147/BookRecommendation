@@ -77,41 +77,90 @@ pip install -r requirements.txt
 python main.py
 ```
 
-## 五、大数据实时链路（可选，完整复刻原架构）
+## 五、大数据实时链路（本机 Windows 原生，已验证）
 
-原架构中 Kafka / Spark / Hive 运行在 Ubuntu，实时链路为：
+原架构实时链路（已在本机 Windows 完整跑通）：
 
 ```
 后端行为日志 → Kafka(userLog) → Spark Streaming → Hive 中间表 → Spark 推荐计算 → 回写 MySQL recommend
 ```
 
-本地复刻有两种方式（二选一）：
+### 一键启动（推荐）
 
-### 方式 A：Docker 全家桶（推荐，最接近原架构）
-
-1. 安装 [Docker Desktop](https://www.docker.com/products/docker-desktop/)（启用 WSL2 后端，内存建议 ≥ 10GB）
-2. 拉取大数据镜像（含 Hadoop + Spark + Hive + Kafka + Jupyter）：
-
-```bash
-docker pull ramtricks/hadoop-bootstrap:v0.0.20-r1
-docker run -d -p 8088:8088 -p 9000:9000 -p 9092:9092 --name bigdata ramtricks/hadoop-bootstrap:v0.0.20-r1
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start-book.ps1
 ```
 
-3. 修改两处地址（原 `192.168.10.12` 改为容器地址）：
-   - `backend/src/main/resources/application.yml` → `spring.kafka.bootstrap-servers: localhost:9092`
-   - `bigdata/` 模块中的 JDBC/Kafka 配置指向 `localhost`
-4. 在容器内执行 `bigdata/` 的 Spark 任务（Spark 3.3.2 / Scala 2.13，见 `docs/deployment-linux.md`）
+脚本按顺序启动 **MySQL → Kafka 3.7（KRaft 单机）→ Hive 4.0 metastore（元数据存 MySQL）→ Spring Boot 后端 → Spark Streaming → Vue 前端**，并检查各端口就绪；停止用 `scripts\stop-book.ps1`。日志输出到仓库 `logs/`。
 
-> 镜像为社区维护，版本与 Spark 3.3.2 可能存在差异，如有兼容问题可按 `bigdata/pom.xml` 版本自建镜像。
+### 环境与软件（官网下载，统一放 `D:\soft\program`）
 
-### 方式 B：WSL2 + Ubuntu 手动安装
+| 组件 | 版本 | 位置 | 说明 |
+| --- | --- | --- | --- |
+| Oracle JDK 17 | 17.0.11 | `D:\soft\program\Java\jdk-17.0.11` | Spark / Hive metastore 运行 |
+| JDK 8 | 1.8 | `D:\soft\program\Java\jdk-8` | 后端 / bigdata 编译 |
+| JDK 26 | 26.0.1 | `D:\soft\program\Java\jdk-26.0.1` | Kafka 运行 |
+| Kafka | 3.7.2 | `D:\soft\program\kafka_2.13-3.7.2` | KRaft 单机（config/kraft/server.properties） |
+| Spark | 3.5.2（Scala 2.13） | `D:\soft\program\spark-3.5.2-bin-hadoop3-scala2.13` | 含 spark-hive |
+| Hadoop | 3.3.6 | `D:\soft\program\Hadoop` | 仅提供 winutils.exe / hadoop.dll（Windows 兼容层，无需启动服务） |
+| Hive | 4.0.0 | `D:\soft\program\apache-hive-4.0.0-bin` | 运行 metastore 服务（thrift 9083），元数据存本机 MySQL `hive` 库 |
+| MySQL | 8.x | 本机服务 | 业务库 `library` + Hive 元数据库 `hive` |
+
+> Windows 限制说明：Hive CLI / HiveServer2 官方不支持 Windows，本机运行的是 **metastore 服务**（推荐数据的元数据管理）；需要 HiveServer2 查询时用 Docker 部署（镜像自带完整 Hive 4.0）。
+
+### 手动启动步骤（等价于脚本内容）
+
+1. **MySQL**：Windows 服务（`sc start MySQL`），建 `library`（业务）与 `hive`（元数据）两库。
+2. **Kafka**（KRaft，端口 9092，JDK 26）：
 
 ```bash
-wsl --install -d Ubuntu-22.04
-# 在 Ubuntu 内安装 Hadoop、Kafka、Spark、Hive（可参考 docs/deployment-linux.md 原文档）
+cd D:\soft\program\kafka_2.13-3.7.2
+# 首次格式化（只需一次）：
+#   java -cp "libs/*" kafka.tools.StorageTool random-uuid   → 得到 UUID
+#   java -cp "libs/*" kafka.tools.StorageTool format -t <UUID> -c config/kraft/server.properties
+# 启动：
+D:\soft\program\Java\jdk-26.0.1\bin\java.exe -cp "libs/*" kafka.Kafka config/kraft/server.properties
 ```
 
-工作量较大，仅在需要完整复刻实时链路时选择。
+3. **Hive metastore**（端口 9083，JDK 17，classpath 需含 Hadoop jars）：
+
+```bash
+cd D:\soft\program\apache-hive-4.0.0-bin
+# 首次初始化 MySQL 元数据库（hive 库，只需一次）：
+#   mysql -uroot -proot < scripts/metastore/upgrade/mysql/hive-schema-4.0.0.mysql.sql
+# 启动：
+java -cp "conf;lib/*;D:\soft\program\Hadoop\share\hadoop\common\*;...hdfs\*;...mapreduce\*;...yarn\*" \
+     -Dhadoop.home.dir=D:/soft/program/Hadoop -Djava.library.path=D:/soft/program/Hadoop/bin \
+     org.apache.hadoop.hive.metastore.HiveMetaStore
+```
+
+4. **后端**（端口 8081，JDK 8）：`cd backend && set SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092 && mvnw.cmd spring-boot:run`
+5. **Spark Streaming**（端口 4040，JDK 17）：
+
+```bash
+cd bigdata
+# 编译（scala-maven-plugin 4.9.2 已修复，产出 recommend_bigdata-1.0.jar）
+mvnw.cmd -q clean package -DskipTests -f ../bigdata/pom.xml
+# 运行（Kafka/MySQL 依赖已放入 spark/jars，无需 --packages）
+spark-submit.cmd --class com.hytc.bigdata.SparkStreamingRunner \
+  --conf "spark.driver.extraJavaOptions=-Dhadoop.home.dir=D:/soft/program/Hadoop -Djava.library.path=D:/soft/program/Hadoop/bin" \
+  --conf "spark.executor.extraJavaOptions=-Dhadoop.home.dir=D:/soft/program/Hadoop -Djava.library.path=D:/soft/program/Hadoop/bin" \
+  target/recommend_bigdata-1.0.jar
+```
+
+6. **前端**（端口 8080）：`cd frontend && npm run serve`
+
+验证：用 `2020001 / 123456` 登录 → 浏览/收藏/借阅图书 → 1 分钟内 Spark Streaming 消费行为 → MySQL `recommend` 表更新 → "猜你喜欢"页展示新推荐。
+
+### 常见问题
+
+| 问题 | 处理 |
+| --- | --- |
+| Spark 报 `Hadoop bin directory does not exist` | 下载 winutils.exe + hadoop.dll 到 `D:\soft\program\Hadoop\bin`，并传 `-Dhadoop.home.dir` |
+| Spark 报 `NativeIO$Windows.access0` UnsatisfiedLinkError | 传 `-Djava.library.path=D:/soft/program/Hadoop/bin`（hadoop.dll 所在目录） |
+| Spark 报 `NoSuchMethodError: ScalaRunTime.wrapRefArray` | 必须使用 **Scala 2.13 版 Spark** 发行版（`spark-3.5.2-bin-hadoop3-scala2.13`） |
+| 推荐表被清空 | 空批次不会覆盖（代码已处理）；确认 Kafka topic 有消息且 Spark 消费组正常 |
+| Hive 表建表报 LOCATION_ALREADY_EXISTS | 切换 metastore 后清理旧 `spark-warehouse/` 与 `metastore_db/`（derby 残留） |
 
 ## 六、无 Kafka 时的行为说明
 

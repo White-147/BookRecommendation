@@ -135,6 +135,8 @@ export default {
         this.recommendTable = res.data.data.list
         this.totalCount = res.data.data.totalCount
         this.stateStatusLoading = false
+      }).catch(() => {
+        this.stateStatusLoading = false
       })
     },
     toBookInfo(item) {
