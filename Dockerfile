@@ -1,13 +1,18 @@
 # BookRecommendation 后端服务镜像（Render Docker 部署用）
-# 注意：docker.io 官方 openjdk 与 maven 镜像已下架，构建/运行全部改用 eclipse-temurin
-# 构建：Eclipse Temurin JDK 8 + 项目自带 Maven Wrapper（自动从 Maven Central 下载 Maven 3.8.6）
+# 注意：docker.io 官方 openjdk 与 maven 镜像已下架，全部改用 eclipse-temurin
+# 构建：Eclipse Temurin JDK 8 + 手动安装 Maven 3.8.8（从 Maven Central 下载二进制制品，不依赖镜像仓库）
 # 运行：Eclipse Temurin JRE 8
 FROM eclipse-temurin:8-jdk-jammy AS build
 WORKDIR /app
-COPY backend/mvnw backend/.mvn backend/pom.xml ./
-RUN chmod +x mvnw && ./mvnw -B dependency:go-offline -q || true
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates wget \
+    && wget -q https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.8/apache-maven-3.8.8-bin.tar.gz \
+    && tar -xzf apache-maven-3.8.8-bin.tar.gz -C /opt \
+    && ln -s /opt/apache-maven-3.8.8/bin/mvn /usr/local/bin/mvn \
+    && rm apache-maven-3.8.8-bin.tar.gz
+COPY backend/pom.xml .
+RUN mvn -B dependency:go-offline -q || true
 COPY backend/src ./src
-RUN ./mvnw -B package -DskipTests -q
+RUN mvn -B package -DskipTests -q
 
 FROM eclipse-temurin:8-jre-jammy
 WORKDIR /app
