@@ -16,7 +16,8 @@ Vue.config.productionTip = false
 // 配置Axios
 // 修改内部$http为Axios
 Vue.prototype.$http = Axios
-Axios.defaults.baseURL = "http://localhost:8081/book_recommendation"
+// 生产环境通过 .env.production 的 VUE_APP_API_BASE_URL 指向线上后端（Render）；本地开发默认 localhost
+Axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || "http://localhost:8081/book_recommendation"
 Axios.interceptors.request.use(config => {
     // 每次发送请求时携带Token信息
     config.headers['Authorization'] = sessionStorage.getItem('token');
