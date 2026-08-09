@@ -1,0 +1,105 @@
+# ============================================================
+# BookRecommendation Docker 部署编排
+# 组合：Spark 3.5.2 + Hadoop 3.3.6 + Hive 4.0.0（Scala 2.13，docker4ops/spark-with-hadoop）
+#       + Apache Kafka（bitnami/kafka）+ MySQL 8（业务库）+ 后端 + 前端
+#
+# 版本说明：
+#   - bigdata 模块 pom 的 spark.version=3.3.2（Scala 2.13）保持不动，
+#     先在 Spark 3.5.2 上运行 3.3.2 编译的 jar（Spark minor 版本二进制兼容）；
+#     若运行报 API 差异，再改 pom 为 3.5.2 重新编译（见 docs/docker-deploy.md）
+#
+# 使用：
+#   docker compose up -d mysql kafka bigdata   # 先起依赖
+#   docker compose up -d backend frontend      # 再起应用
+# ============================================================
+services:
+  # ---- 大数据全家桶：Hadoop + Hive + Spark（Scala 2.13）----
+  bigdata:
+    image: docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0_scala-2.13
+    container_name: book-bigdata
+    hostname: bigdata
+    environment:
+      - HADOOP_HEAPSIZE=1024
+      - SPARK_MASTER=local[*]
+      # Hive metastore 使用 derby（单机演示）；生产可换 MySQL metastore
+    ports:
+      - "8088:8088"   # YARN ResourceManager
+      - "9000:9000"   # HDFS NameNode
+      - "10000:10000" # HiveServer2
+      - "9870:9870"   # HDFS NameNode UI
+      - "4040:4040"   # Spark UI
+    volumes:
+      - ./bigdata/target:/opt/bigdata-jars   # 挂载编译产物（mvn package 后）
+    networks:
+      - booknet
+    mem_limit: 4g
+
+  # ---- Kafka（用户行为日志）----
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: book-kafka
+    environment:
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    ports:
+      - "9092:9092"
+    networks:
+      - booknet
+    mem_limit: 1g
+
+  # ---- 业务数据库（MySQL 8）----
+  mysql:
+    image: mysql:8.0
+    container_name: book-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=library
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - booknet
+    mem_limit: 1g
+
+  # ---- Spring Boot 后端（JDK 8）----
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: book-backend
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/library?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql
+      - kafka
+    networks:
+      - booknet
+
+  # ---- Vue 前端（nginx 托管 + 代理后端）----
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: book-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - booknet
+
+networks:
+  booknet:
+    driver: bridge

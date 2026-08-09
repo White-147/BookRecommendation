@@ -131,7 +131,7 @@ cd backend && mvnw.cmd spring-boot:run     # 后端 (8081)
 cd frontend && npm install && npm run serve # 前端
 ```
 
-演示账号 `2020001` / `2020002` / `2020003`，密码 `123456`。大数据实时链路（Kafka/Spark/Hive）可选方案见 [本地完整运行指南](./docs/running-local.md)。
+演示账号 `2020001` / `2020002` / `2020003`，密码 `123456`。大数据实时链路（Kafka/Spark/Hive）可选方案见 [本地完整运行指南](./docs/running-local.md) 与 [Docker 全链路部署指南](./docs/docker-deploy.md)（Spark 3.5.2 + Kafka 3.7 + Hive 4.0，3.3.2 jar 先试方案）。
 
 ## 部署说明
 
