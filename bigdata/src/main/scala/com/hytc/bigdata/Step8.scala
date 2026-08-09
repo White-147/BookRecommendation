@@ -44,7 +44,7 @@ object Step8 {
       })
     })
 
-    step7RDD.distinct().map((x: (String, Double)) => {
+    val recommendDF = step7RDD.distinct().map((x: (String, Double)) => {
         val strings: Array[String] = x._1.split(",")
         (strings(0), strings(1), x._2)
       }).map((x: (String, String, Double)) => {
@@ -53,13 +53,17 @@ object Step8 {
       val recommend: Double = x._3
       (certID, callNO, recommend)
     }).toDF("CERT_ID", "CALL_NO", "recommend")
-      .write.format("jdbc")
-      .option("url", "jdbc:mysql://hadoopPD:3306/library")
-      .option("driver", "com.mysql.cj.jdbc.Driver")
-      .option("user", "root")
-      .option("password", "root")
-      .option("dbtable", "recommend")
-      .mode(SaveMode.Overwrite)
-      .save()
+
+    // 空批次（Kafka 无新消息）不覆盖 recommend 表，避免清空推荐结果
+    if (!recommendDF.isEmpty) {
+      recommendDF.write.format("jdbc")
+        .option("url", "jdbc:mysql://hadoopPD:3306/library")
+        .option("driver", "com.mysql.cj.jdbc.Driver")
+        .option("user", "root")
+        .option("password", "root")
+        .option("dbtable", "recommend")
+        .mode(SaveMode.Overwrite)
+        .save()
+    }
   }
 }

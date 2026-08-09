@@ -26,15 +26,12 @@ class SQL:
 
     def save(self, img, bookName):
         try:
-            sql = "update book set img  = %s where M_TITLE = %s" % ("'" + img + "'", "'" + bookName + "'")
-            print(sql)
-            self.cursor.execute(sql)
-
+            # 参数化查询，避免书名含引号导致 SQL 报错/注入
+            sql = "update book set img = %s where M_TITLE = %s"
+            self.cursor.execute(sql, (img, bookName))
             self.db.commit()
-            self.cursor.close()
-            self.db.close()
         except Exception as e:
-            pass
+            print(f"[crawler] save 失败: {e}")
 
 
 def get_src(result_list):

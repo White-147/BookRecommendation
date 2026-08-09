@@ -86,7 +86,10 @@ public class LendServiceImpl extends ServiceImpl<LendMapper, Lend> implements IL
         QueryWrapper<Lend> wrapper = new QueryWrapper<Lend>();
         wrapper.eq("CERT_ID",certId);
         wrapper.eq("M_CALL_NO",callNo);
-        return this.baseMapper.selectOne(wrapper);
+        wrapper.orderByDesc("LEND_DATE");
+        // 同书重复借阅时取最新一条，避免 selectOne 抛 TooManyResultsException
+        List<Lend> lends = this.baseMapper.selectList(wrapper);
+        return lends.isEmpty() ? null : lends.get(0);
     }
 
     @Override

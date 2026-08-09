@@ -27,8 +27,7 @@
          LEFT JOIN
          (SELECT CALL_NO FROM collect WHERE CERT_ID = #{certId})
          AS a ON book.M_CALL_NO = a.CALL_NO
-        WHERE book.M_CALL_NO in (SELECT recommend.CALL_NO from recommend)
-          AND #{certId} in (select recommend.CERT_ID from recommend)
+        WHERE book.M_CALL_NO in (SELECT CALL_NO FROM recommend WHERE CERT_ID = #{certId})
         limit ${pageIndex},${pageSize}
     </select>
 </mapper>

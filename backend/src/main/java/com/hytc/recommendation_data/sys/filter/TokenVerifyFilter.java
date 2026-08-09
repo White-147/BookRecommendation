@@ -48,6 +48,7 @@ public class TokenVerifyFilter extends BasicAuthenticationFilter {
             if (verify == null) {
                 // 校验失败 提示用户先登录
                 responseLogin(response);
+                return;
             }
             // 获取当前登陆的账号信息
             String account = verify.getClaim("account").asString();

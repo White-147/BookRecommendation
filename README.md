@@ -121,6 +121,18 @@ sequenceDiagram
 
 更多说明见 [数据库说明](./docs/database.md) 和 [项目背景与数据说明](./docs/project-background.md)。
 
+## 本地运行（Windows 单机）
+
+推荐结果已由 `database/init.sql` 预置，不依赖 Hadoop/Kafka/Spark/Hive 即可完整演示推荐功能：
+
+```bash
+mysql -uroot -proot < database/init.sql   # 建库建表 + 演示数据 + 预置推荐
+cd backend && mvnw.cmd spring-boot:run     # 后端 (8081)
+cd frontend && npm install && npm run serve # 前端
+```
+
+演示账号 `2020001` / `2020002` / `2020003`，密码 `123456`。大数据实时链路（Kafka/Spark/Hive）可选方案见 [本地完整运行指南](./docs/running-local.md)。
+
 ## 部署说明
 
 ### 1. 前端

@@ -28,6 +28,9 @@ object SparkStreamingRunner {
     val logDStream: DStream[String] = kafkaDStream.map((_: ConsumerRecord[String, String]).value())
 
     logDStream.foreachRDD(foreachFunc = (rdd: RDD[String]) => {
+      // 空批次（Kafka 无新消息）跳过计算链路，避免空数据覆盖推荐结果
+      if (rdd.isEmpty()) return
+
       val spark: SparkSession = SparkSession
         .builder()
         .config(sparkConf)
