@@ -25,7 +25,14 @@ public class RecommendServiceImpl extends ServiceImpl<RecommendMapper, Recommend
     @Override
     public PageUtils getRecommend(RecommendDTO queryDTO, int pageSize, int currentPage) {
         Integer pageIndex = queryDTO.getPageIndex();
-        queryDTO.setPageIndex((pageIndex - 1) * queryDTO.getPageSize());
+        if (pageIndex == null) {
+            // 未传 pageIndex 时默认第一页，避免 NPE
+            pageIndex = 1;
+            queryDTO.setPageIndex(0);
+        } else {
+            Integer dtoPageSize = queryDTO.getPageSize();
+            queryDTO.setPageIndex((pageIndex - 1) * (dtoPageSize == null ? 10 : dtoPageSize));
+        }
 
         List<Recommend> recommend = this.baseMapper.getRecommend(queryDTO);
         QueryWrapper<Recommend> wrapper = new QueryWrapper<>();

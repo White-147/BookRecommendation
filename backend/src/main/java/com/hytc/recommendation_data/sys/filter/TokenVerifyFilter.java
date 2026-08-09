@@ -68,8 +68,10 @@ public class TokenVerifyFilter extends BasicAuthenticationFilter {
                     || request.getRequestURI().equals("/book_recommendation/sys/user/selectByAccount")
                     || request.getRequestURI().equals("/book_recommendation/sys/user/selectByCertId")) {
                 chain.doFilter(request, response);
+            } else {
+                // 无 token 的非白名单请求：返回"请先登录"，避免请求静默挂起
+                responseLogin(response);
             }
-//            responseLogin(response);
         }
     }
 
