@@ -4,6 +4,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SaveMode, SparkSession}
+import com.hytc.util.JdbcConfig
 
 /**
  * @Author: White Jiang
@@ -32,10 +33,10 @@ object RelatedBookRecommend {
     step5RDD.distinct().
       toDF("CALL_NO1", "CALL_NO2")
       .write.format("jdbc")
-      .option("url", "jdbc:mysql://localhost:3306/library")
-      .option("driver", "com.mysql.cj.jdbc.Driver")
-      .option("user", "root")
-      .option("password", "root")
+      .option("url", JdbcConfig.url)
+      .option("driver", JdbcConfig.driver)
+      .option("user", JdbcConfig.user)
+      .option("password", JdbcConfig.password)
       .option("dbtable", "relatedbook")
       .mode(SaveMode.Overwrite)
       .save()

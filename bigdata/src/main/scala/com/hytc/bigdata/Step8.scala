@@ -3,6 +3,7 @@ package com.hytc.bigdata
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SaveMode, SparkSession}
+import com.hytc.util.JdbcConfig
 
 /**
  * @Author: White Jiang
@@ -57,10 +58,10 @@ object Step8 {
     // 空批次（Kafka 无新消息）不覆盖 recommend 表，避免清空推荐结果
     if (!recommendDF.isEmpty) {
       recommendDF.write.format("jdbc")
-        .option("url", "jdbc:mysql://localhost:3306/library")
-        .option("driver", "com.mysql.cj.jdbc.Driver")
-        .option("user", "root")
-        .option("password", "root")
+        .option("url", JdbcConfig.url)
+        .option("driver", JdbcConfig.driver)
+        .option("user", JdbcConfig.user)
+        .option("password", JdbcConfig.password)
         .option("dbtable", "recommend")
         .mode(SaveMode.Overwrite)
         .save()

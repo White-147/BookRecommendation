@@ -12,21 +12,7 @@
         <hadoop.version>3.3.2</hadoop.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>scala-tools.org</id>
-            <name>Scala-Tools Maven2 Repository</name>
-            <url>http://scala-tools.org/repo-releases</url>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>scala-tools.org</id>
-            <name>Scala-Tools Maven2 Repository</name>
-            <url>http://scala-tools.org/repo-releases</url>
-        </pluginRepository>
-    </pluginRepositories>
+    <!-- 仅使用 Maven Central（原 scala-tools.org 仓库已废弃且为 http，移除避免构建失败/拖慢） -->
 
     <dependencies>
         <dependency>
@@ -104,6 +90,14 @@
             <artifactId>kafka-clients</artifactId>
             <version>3.4.0</version>
         </dependency>
+
+        <!--  Test：ScalaTest（推荐算法核心函数单测，如 Step5 皮尔逊系数）  -->
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${spark.scala.version}</artifactId>
+            <version>3.2.18</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -128,6 +122,24 @@
                         <arg>-target:jvm-1.8</arg>
                     </args>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>2.2.0</version>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>Step5Test.txt</filereports>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

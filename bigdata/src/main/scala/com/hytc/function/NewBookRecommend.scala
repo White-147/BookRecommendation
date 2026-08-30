@@ -4,6 +4,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SaveMode, SparkSession}
+import com.hytc.util.JdbcConfig
 
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -23,10 +24,10 @@ object NewBookRecommend {
     import spark.implicits._
 
     val bookRDD: RDD[(String, String)] = spark.read.format("jdbc")
-      .option("url", "jdbc:mysql://localhost:3306/library")
-      .option("driver", "com.mysql.cj.jdbc.Driver")
-      .option("user", "root")
-      .option("password", "root")
+      .option("url", JdbcConfig.url)
+      .option("driver", JdbcConfig.driver)
+      .option("user", JdbcConfig.user)
+      .option("password", JdbcConfig.password)
       .option("dbtable", "book")
       .load().rdd.map((x: Row) => {
       val callNo: String = x.getAs[String]("M_CALL_NO")
@@ -64,10 +65,10 @@ object NewBookRecommend {
     resultRDD.map((_: (String, String))._1)
       .toDF("CALL_NO")
       .write.format("jdbc")
-      .option("url", "jdbc:mysql://localhost:3306/library")
-      .option("driver", "com.mysql.cj.jdbc.Driver")
-      .option("user", "root")
-      .option("password", "root")
+      .option("url", JdbcConfig.url)
+      .option("driver", JdbcConfig.driver)
+      .option("user", JdbcConfig.user)
+      .option("password", JdbcConfig.password)
       .option("dbtable", "newbook")
       .mode(SaveMode.Overwrite)
       .save()

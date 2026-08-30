@@ -18,7 +18,12 @@ import scala.collection.mutable
  */
 object KafkaUtil {
   private val properties: Properties = PropertiesUtil.load("config.properties")
-  private val broker_list: String = properties.getProperty("kafka.broker")
+  // Kafka broker 地址：环境变量 BOOK_KAFKA_BROKER > config.properties 的 kafka.broker > 默认 localhost:9092
+  // （Docker 全链路由 compose 注入 BOOK_KAFKA_BROKER=kafka:9092；本机原生链路用默认值）
+  private val broker_list: String =
+    sys.env.get("BOOK_KAFKA_BROKER").map(_.trim).filter(_.nonEmpty)
+      .orElse(Option(properties.getProperty("kafka.broker")).map(_.trim).filter(_.nonEmpty))
+      .getOrElse("localhost:9092")
 
   var consumerConfigs: mutable.Map[String, Object] = collection.mutable.Map(
     // 初始化链接到集群的地址
