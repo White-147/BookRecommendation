@@ -4,7 +4,9 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
-RUN npm run build
+# docker 模式（.env.docker）下 baseURL 为相对路径 /book_recommendation，经 nginx 代理到 compose 后端；
+# GitHub Pages 部署仍用默认 production 模式（.env.production -> Render 后端）
+RUN npm run build -- --mode docker
 
 FROM nginx:1.25-alpine
 COPY --from=build /app/dist /usr/share/nginx/html

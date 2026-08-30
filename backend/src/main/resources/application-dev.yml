@@ -3,12 +3,14 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
       driver-class-name: com.mysql.cj.jdbc.Driver
-      url: jdbc:mysql://localhost:3306/library?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=true&nullCatalogMeansCurrent=true
-      username: root
-      password: root
-      initial-size: 10
-      max-active: 100
-      min-idle: 10
+      # 数据库连接（可用环境变量 SPRING_DATASOURCE_DRUID_URL/USERNAME/PASSWORD 覆盖，如 Render + TiDB 部署）
+      url: ${SPRING_DATASOURCE_DRUID_URL:jdbc:mysql://localhost:3306/library?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8&useSSL=true&nullCatalogMeansCurrent=true}
+      username: ${SPRING_DATASOURCE_DRUID_USERNAME:root}
+      password: ${SPRING_DATASOURCE_DRUID_PASSWORD:root}
+      # 连接池参数（TiDB Serverless 等低并发场景需调小，可用环境变量覆盖）
+      initial-size: ${SPRING_DATASOURCE_DRUID_INITIAL_SIZE:10}
+      max-active: ${SPRING_DATASOURCE_DRUID_MAX_ACTIVE:100}
+      min-idle: ${SPRING_DATASOURCE_DRUID_MIN_IDLE:10}
       max-wait: 60000
       max-pool-prepared-statement-per-connection-size: 20
       time-between-log-stats-millis: 60000

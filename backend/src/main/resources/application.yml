@@ -4,8 +4,8 @@ spring:
   profiles:
     active: dev
   kafka:
-    # 指定kafka代理地址
-    bootstrap-servers: 192.168.10.12:9092
+    # 指定kafka代理地址（可用环境变量 SPRING_KAFKA_BOOTSTRAP_SERVERS 覆盖，默认本机 KRaft 单机 9092）
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       # 指定消息key和消息体的编解码方式
       key-serializer: org.apache.kafka.common.serialization.StringSerializer

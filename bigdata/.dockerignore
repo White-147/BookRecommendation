@@ -1,0 +1,7 @@
+# Docker 构建上下文忽略（bigdata 目录）
+target/
+spark-warehouse/
+metastore_db/
+derby.log
+.idea/
+*.log

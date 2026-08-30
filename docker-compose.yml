@@ -1,42 +1,55 @@
 # ============================================================
 # BookRecommendation Docker 部署编排
-# 组合：Spark 3.5.2 + Hadoop 3.3.6 + Hive 4.0.0（Scala 2.13，docker4ops/spark-with-hadoop）
-#       + Apache Kafka（bitnami/kafka）+ MySQL 8（业务库）+ 后端 + 前端
+# 组合：Spark 3.5.2（Scala 2.13，自建镜像 bigdata/Dockerfile，内嵌 Hive/derby）
+#       + Apache Kafka（bitnamilegacy/kafka）+ MySQL 8（业务库）+ 后端 + 前端
 #
-# 版本说明：
+# 镜像选型说明：
+#   - 原 docker4ops/spark-with-hadoop（Hadoop+Hive 全家桶）为 arm64 单平台镜像，
+#     与 x86_64 主机不匹配；官方 apache/spark 3.5.x 又仅提供 Scala 2.12
+#     （scala2.13 只存在于 Spark 4.x，但其移除了本项目使用的 DStream API）。
+#     因此基于官方 spark-3.5.2-bin-hadoop3-scala2.13 二进制包自建 amd64 镜像
+#     （见 bigdata/Dockerfile），与本地 Windows 原生链路完全一致。
+#   - 推荐链路（Spark Streaming + Hive 表 + MySQL 回写）不依赖 HDFS/YARN/HiveServer2，
+#     Hive 使用内嵌 derby metastore（数据落在命名卷 bigdata-warehouse）。
 #   - bigdata 模块 pom 的 spark.version=3.3.2（Scala 2.13）保持不动，
 #     先在 Spark 3.5.2 上运行 3.3.2 编译的 jar（Spark minor 版本二进制兼容）；
 #     若运行报 API 差异，再改 pom 为 3.5.2 重新编译（见 docs/docker-deploy.md）
+#   - bitnami/kafka 标签已迁移到 bitnamilegacy 组织
 #
 # 使用：
-#   docker compose up -d mysql kafka bigdata   # 先起依赖
-#   docker compose up -d backend frontend      # 再起应用
+#   docker compose up -d --build mysql kafka bigdata   # 先起依赖（bigdata 首次构建约 5-10 分钟）
+#   docker compose up -d backend frontend              # 再起应用
 # ============================================================
 services:
-  # ---- 大数据全家桶：Hadoop + Hive + Spark（Scala 2.13）----
+  # ---- 大数据计算：Spark 3.5.2（Scala 2.13，自建镜像）----
   bigdata:
-    image: docker4ops/spark-with-hadoop:spark-3.5.2_hadoop-3.3.6_hive-4.0.0_scala-2.13
+    build:
+      context: ./bigdata
+      dockerfile: Dockerfile
+    image: book-bigdata:3.5.2-scala2.13
     container_name: book-bigdata
     hostname: bigdata
     environment:
-      - HADOOP_HEAPSIZE=1024
-      - SPARK_MASTER=local[*]
-      # Hive metastore 使用 derby（单机演示）；生产可换 MySQL metastore
+      # JDBC 回写（Step8/NewBookRecommend/RelatedBookRecommend 经 JdbcConfig 读取），
+      # 容器内用 compose 网络别名 mysql，避免连 localhost 失败
+      - BOOK_DB_URL=jdbc:mysql://mysql:3306/library
+      - BOOK_DB_USER=root
+      - BOOK_DB_PASSWORD=root
+      # Kafka 消费地址（KafkaUtil 读取；容器内用 compose 服务名 kafka）
+      - BOOK_KAFKA_BROKER=kafka:9092
     ports:
-      - "8088:8088"   # YARN ResourceManager
-      - "9000:9000"   # HDFS NameNode
-      - "10000:10000" # HiveServer2
-      - "9870:9870"   # HDFS NameNode UI
-      - "4040:4040"   # Spark UI
+      - "4040:4040"   # Spark UI（spark-submit 驱动的 Web UI）
     volumes:
-      - ./bigdata/target:/opt/bigdata-jars   # 挂载编译产物（mvn package 后）
+      - ./bigdata/target:/opt/bigdata-jars        # 挂载编译产物（mvn package 后）
+      - bigdata-warehouse:/opt/spark/work-dir     # Hive 内嵌 derby warehouse 持久化
     networks:
       - booknet
     mem_limit: 4g
 
   # ---- Kafka（用户行为日志）----
+  # 注意：Bitnami 镜像已迁移到 bitnamilegacy 组织，原 bitnami/kafka:3.7 标签在 Docker Hub 已下架
   kafka:
-    image: bitnami/kafka:3.7
+    image: bitnamilegacy/kafka:3.7
     container_name: book-kafka
     environment:
       - KAFKA_CFG_NODE_ID=0
@@ -75,9 +88,11 @@ services:
       dockerfile: Dockerfile
     container_name: book-backend
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/library?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
+      # 注意：数据源配置在 application-dev.yml 的 spring.datasource.druid.* 前缀下
+      # （druid-spring-boot-starter 绑定），环境变量必须用 SPRING_DATASOURCE_DRUID_* 才能覆盖
+      - SPRING_DATASOURCE_DRUID_URL=jdbc:mysql://mysql:3306/library?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8
+      - SPRING_DATASOURCE_DRUID_USERNAME=root
+      - SPRING_DATASOURCE_DRUID_PASSWORD=root
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     ports:
       - "8081:8081"
@@ -103,3 +118,7 @@ services:
 networks:
   booknet:
     driver: bridge
+
+volumes:
+  bigdata-warehouse:
+    name: book-bigdata-warehouse
