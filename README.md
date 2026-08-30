@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <img src="./docs/assets/screenshots/frontend-overview.png" alt="BookRecommendation 前端登录界面截图" width="900">
+  <img src="./docs/assets/screenshots/login.png" alt="BookRecommendation 前端登录界面截图" width="900">
 </p>
 
 图书推荐系统，本科毕业设计项目。项目以高校图书馆业务场景为背景，围绕学生用户、真实馆藏图书、借阅收藏行为和推荐计算，构建了一个前后端分离 + 大数据推荐链路的完整工程。
@@ -73,10 +73,11 @@ BookRecommendation/
 ├── backend/      # Spring Boot 后端服务
 ├── bigdata/      # Spark / Hive / Kafka 推荐计算模块
 ├── crawler/      # 图书封面补全爬虫
-├── database/     # 数据库脚本占位目录，后续可补充脱敏 SQL
+├── database/     # 数据库脚本（init.sql：建库建表 + 演示数据 + 预置推荐）
 ├── docs/         # 项目详细文档
 ├── frontend/     # Vue 前端项目
-├── scripts/      # 辅助脚本占位目录
+├── scripts/      # 一键启停脚本（start-book.ps1 / stop-book.ps1）
+├── .env.example  # 环境变量示例（后端/前端/大数据配置外置清单）
 ├── .gitignore
 └── README.md
 ```
@@ -146,7 +147,7 @@ powershell -ExecutionPolicy Bypass -File scripts\stop-book.ps1
 
 ### Docker 部署（可选）
 
-仓库提供完整 Docker Compose 编排（Spark 3.5.2 + Hadoop 3.3.6 + Hive 4.0 + Kafka 3.7 + MySQL 8 + 前后端），适合服务器部署。详见 [Docker 全链路部署指南](./docs/docker-deploy.md)。
+仓库提供完整 Docker Compose 编排（Spark 3.5.2 [Scala 2.13 官方镜像] + Kafka 3.7 + MySQL 8 + 前后端，Hive 表经内嵌 derby 落命名卷），适合服务器部署。详见 [Docker 全链路部署指南](./docs/docker-deploy.md)；本机（WSL2 + Docker Desktop）验证 Docker 编排的逐步操作见 [WSL + Docker 全链路验证指南](./docs/wsl-docker-verify.md)。
 
 ### 免费在线演示（无需服务器）✅ 已上线
 
@@ -158,6 +159,36 @@ powershell -ExecutionPolicy Bypass -File scripts\stop-book.ps1
 - 数据库：**TiDB Cloud Serverless**（MySQL 兼容，免费 5GB，代码零改动）
 
 大数据实时链路（Kafka/Spark/Hive）在免费层不运行，演示的是预置推荐模式（浏览/搜索/收藏/借阅/推荐展示全功能）。部署步骤与踩坑记录（openjdk 镜像下架、Druid 环境变量前缀、连接池限制、publicPath、Health Check 等）见 [免费在线部署指南](./docs/deploy-free.md)。
+
+## 已实跑验证（Docker 全链路）✅
+
+2026-08 在本机 **Windows + WSL2 + Docker Desktop 4.88.1** 上把 Docker 编排完整跑通，并验证推荐链路**真实产出**（非仅使用 `init.sql` 预置数据）：
+
+- **环境**：自建 amd64 Spark 3.5.2（Scala 2.13，`bigdata/Dockerfile`，基于官方 `spark-3.5.2-bin-hadoop3-scala2.13` 二进制包）+ Kafka 3.7（KRaft，`bitnamilegacy/kafka`）+ MySQL 8 + 前后端容器。
+- **验证结果**：
+
+| 环节 | 结果 |
+| --- | --- |
+| Kafka 消费 | 前端浏览/收藏/借阅行为 → `userLog` topic，Spark Streaming 每分钟批次消费 |
+| Hive 中间表 | `userlog` 7 条行为落表；`step1~step8` 全部产出（内嵌 derby metastore，数据落命名卷） |
+| 图书相似度（step5） | **15 条正相关图书对**（全用户空间皮尔逊，含 (0,0) 样本点，系数 1.0） |
+| 推荐回写（step8） | `recommend` 表被计算结果覆盖：2020001 → Java 编程思想 0.625 / Spring 实战 0.5 / 鸟哥的 Linux 私房菜 0.375 |
+| 相关图书回写 | `relatedbook` 15 条（RelatedBookRecommend） |
+| 前端展示 | "猜你喜欢"页显示 3 条链路推荐；首页 ECharts 借阅频次图正常渲染 |
+
+实跑截图（`docs/assets/screenshots/`）：
+
+| 登录页 | 首页（用户卡片 + 借阅提醒 + ECharts） |
+| --- | --- |
+| ![登录页](./docs/assets/screenshots/login.png) | ![首页](./docs/assets/screenshots/home.png) |
+
+| 猜你喜欢（链路推荐） | 新书速递 | 图书借阅 | 我的收藏 |
+| --- | --- | --- | --- |
+| ![猜你喜欢](./docs/assets/screenshots/recommend.png) | ![新书速递](./docs/assets/screenshots/newbook.png) | ![图书借阅](./docs/assets/screenshots/booklist.png) | ![我的收藏](./docs/assets/screenshots/collection.png) |
+
+**复现**：`docker compose up -d --build mysql kafka bigdata` → `docker compose up -d backend frontend` → 容器内 `spark-submit` 启动 `SparkStreamingRunner`（完整步骤见 [WSL + Docker 全链路验证指南](./docs/wsl-docker-verify.md)）→ 前端登录 `2020001/123456` 操作图书 → 查看 `recommend` / `step5`。
+
+> 截图由仓库自带工具生成：`scripts/screenshots/`（容器内 puppeteer，`docker build -t book-shots scripts\screenshots` 后 `docker run` 即可复现）。
 
 ## 部署说明
 
@@ -196,6 +227,8 @@ mvn spring-boot:run
 backend/src/main/resources/application-dev.yml
 backend/src/main/resources/application.yml
 ```
+
+配置外置：仓库根目录 `.env.example` 列出全部可覆盖的环境变量（数据库连接、连接池、Kafka 地址、前端 API 基址）。后端已内置本机默认值（`localhost:3306` / `root:root` / `localhost:9092`），无需任何配置即可本地运行；需要覆盖时设置同名环境变量（如 `SPRING_DATASOURCE_DRUID_PASSWORD`、`SPRING_KAFKA_BOOTSTRAP_SERVERS`）。
 
 ### 3. 大数据推荐模块
 
@@ -248,14 +281,18 @@ Spark 任务会基于用户-图书行为权重构建推荐计算链路，生成�
 - [本地完整运行指南（Windows，含一键脚本）](./docs/running-local.md)
 - [免费在线部署指南（Render + TiDB + GitHub Pages）](./docs/deploy-free.md)
 - [Docker 全链路部署指南](./docs/docker-deploy.md)
+- [WSL + Docker 全链路验证指南（本机验证 Docker 编排）](./docs/wsl-docker-verify.md)
 - [Linux 与大数据部署说明](./docs/deployment-linux.md)
 - [推荐算法与数据链路](./docs/recommendation-algorithm.md)
 - [爬虫子项目说明](./docs/crawler.md)
 
 ## 后续可改进方向
 
-- 增加 `.env.example`，减少环境地址写死带来的迁移成本。
-- 补充前端页面截图和推荐链路运行截图。
-- 为核心业务接口和推荐计算增加更完整的测试说明。
+- ✅ 已补充根目录 `.env.example` 与配置外置（数据库 / 连接池 / Kafka / 前端 API 均支持环境变量覆盖，代码默认值即本机地址）。
+- ✅ 已为推荐算法核心函数（Step5 皮尔逊相关系数 / parseUsers）补充 ScalaTest 单测（`bigdata/src/test/scala/com/hytc/bigdata/Step5Test.scala`）。
+- ✅ 已将 Step5 皮尔逊相似度改为**全用户空间**计算（0/1 向量含"双方均未操作"的 (0,0) 样本点，用户集完全相同视为 1.0），修复原"用户并集"构造使系数恒 ≤ 0、推荐链路产出为空的缺陷；单测覆盖正/负相关与边界。
+- ✅ 已将 Step8 / NewBookRecommend / RelatedBookRecommend 的 JDBC 回写地址外置为 `com.hytc.util.JdbcConfig`（优先级：环境变量 `BOOK_DB_*` > `config.properties` 的 `db.*` > 本机默认值），并新增 `JdbcConfigTest`；docker-compose 已注入容器内回写地址。
+- ✅ 已修复 docker-compose 链路：backend 镜像改用 eclipse-temurin（openjdk/maven 官方镜像已下架）；compose 数据库环境变量改用 Druid 前缀 `SPRING_DATASOURCE_DRUID_*`；前端新增 docker 构建模式（相对路径经 nginx 代理本机后端，不再依赖 Render 在线后端）。
+- ✅ 已补充实跑截图（登录 / 首页 ECharts / 猜你喜欢 / 新书速递 / 图书借阅 / 我的收藏，见「已实跑验证（Docker 全链路）」章节，由 `scripts/screenshots` 工具生成）。
 - 将图书封面资源补齐为正式封面图（当前使用占位图）。
-- 在支持 Docker 的服务器上实跑 Docker 全链路部署（compose 编排已就绪）。
+- ✅ 已在本机（WSL2 + Docker Desktop）实跑 Docker 全链路并验证推荐产出（见「已实跑验证（Docker 全链路）」章节）。
