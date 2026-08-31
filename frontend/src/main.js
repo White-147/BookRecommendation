@@ -26,11 +26,36 @@ Axios.interceptors.request.use(config => {
     return Promise.reject(error)
 })
 
-router.beforeEach((to, from, next) => {
-    let loginInfo = sessionStorage.getItem('loginForm')
-    if (to.name === 'Login' || to.name === 'Register')
+// —— 在线演示：未登录访问时自动使用演示账号（2020001/123456）登录并直入首页，
+//    避免访客停留在登录页；手动登录 / 注册不受影响；后端未就绪时回退到登录页 ——
+async function tryDemoLogin() {
+    if (sessionStorage.getItem('loginForm')) return true
+    if (sessionStorage.getItem('demoLoginTried') === '1') return false
+    sessionStorage.setItem('demoLoginTried', '1')
+    try {
+        const res = await Axios.post('/login', { account: '2020001', password: '123456' })
+        if (res.data.code === 200 && res.headers.authorization) {
+            sessionStorage.setItem('token', res.headers.authorization)
+            const user = await Axios.get('/sys/user/selectByAccount?account=2020001')
+            sessionStorage.setItem('loginForm', JSON.stringify(user.data.data))
+            router.push('/Home')
+            return true
+        }
+    } catch (e) {
+        // 后端冷启动/暂不可用：停留在登录页供手动重试
+    }
+    return false
+}
+
+router.beforeEach(async (to, from, next) => {
+    if (to.name === 'Login' || to.name === 'Register') {
+        // 在线演示：访问登录页自动登录直入首页；注册页跳过
+        if (to.name === 'Login') {
+            const ok = await tryDemoLogin()
+            if (ok) return
+        }
         next()
-    else if (to.name !== 'Login' && !loginInfo) {
+    } else if (to.name !== 'Login' && !sessionStorage.getItem('loginForm')) {
         next({name: 'Login'})
         ElementUI.Message.error('请先登录')
     } else next()
