@@ -94,7 +94,9 @@ router.beforeEach(async (to, from, next) => {
 })
 
 router.afterEach((to, from) => {
-    history.pushState(null, null, location.protocol + '/' + location.host + '/#' + to.path)
+    // 保持 hash 形式 URL：以相对形式 push（原实现拼 protocol+host 少了一对 //，
+    // 且绝对 URL 会丢弃部署子路径前缀，导致刷新 404）
+    history.pushState(null, null, '#' + to.path)
 })
 
 // 捕获重复访问路由的错误
