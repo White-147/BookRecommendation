@@ -21,8 +21,8 @@ const recommend = books.slice(0, 8)
 const newbooks = books.slice(4, 12)
 const related = books.slice(1, 5)
 const lends = [
-  { certId: '2020001', name: '演示用户', mCallNo: 'TP311.56-1', mTitle: 'Spring 实战（第 6 版）', mPubYear: '2022', status: '借阅中' },
-  { certId: '2020001', name: '演示用户', mCallNo: 'TP312.8JA-3', mTitle: 'Effective Java（第 3 版）', mPubYear: '2019', status: '借阅中' },
+  { callId: 1, certId: '2020001', name: '演示用户', mCallNo: 'TP311.56-1', mTitle: 'Spring 实战（第 6 版）', mPubYear: '2022', status: '借阅中', lendDate: '2026-8-26', endDate: '2026-9-26' },
+  { callId: 2, certId: '2020001', name: '演示用户', mCallNo: 'TP312.8JA-3', mTitle: 'Effective Java（第 3 版）', mPubYear: '2019', status: '借阅中', lendDate: '2026-8-29', endDate: '2026-9-29' },
 ]
 const ok = (data) => ({ code: 200, msg: '成功', data })
 const bookDetail = books[1]
