@@ -8,6 +8,8 @@ import './plugins/element.js'
 import './assets/css/global.css'
 import Axios from 'axios'
 import tab from "@/store/tab";
+// 嵌入作品集演示模式（VUE_APP_EMBEDDED_DEMO=true）时的本地 mock 数据
+import DEMO_MOCKS from './mock/mocks'
 
 // 配置elementUI
 Vue.use(ElementUI)
@@ -18,6 +20,36 @@ Vue.config.productionTip = false
 Vue.prototype.$http = Axios
 // 生产环境通过 .env.production 的 VUE_APP_API_BASE_URL 指向线上后端（Render）；本地开发默认 localhost
 Axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || "http://localhost:8081/book_recommendation"
+
+// —— 嵌入作品集演示模式（VUE_APP_EMBEDDED_DEMO=true）：拦截全部 API 请求返回本地 mock 数据，
+//    无后端也能展示完整登录后界面；登录响应携带演示 token（headers.authorization）——
+if (process.env.VUE_APP_EMBEDDED_DEMO === 'true') {
+  Axios.defaults.adapter = (config) => {
+    const url = config.url || ''
+    let payload = null
+    for (const key of Object.keys(DEMO_MOCKS)) {
+      if (url.includes(key)) {
+        payload = DEMO_MOCKS[key](config)
+        break
+      }
+    }
+    if (payload === null) {
+      payload = { code: 200, msg: 'ok', data: null }
+    }
+    const headers = { 'content-type': 'application/json' }
+    if (url.includes('/login')) {
+      headers.authorization = 'Bearer demo-token-2020001'
+    }
+    return Promise.resolve({
+      data: payload,
+      status: 200,
+      statusText: 'OK',
+      headers,
+      config,
+    })
+  }
+}
+
 Axios.interceptors.request.use(config => {
     // 每次发送请求时携带Token信息
     config.headers['Authorization'] = sessionStorage.getItem('token');
